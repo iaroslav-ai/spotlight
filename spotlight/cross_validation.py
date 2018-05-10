@@ -161,7 +161,8 @@ def user_based_train_test_split(interactions,
                          weights=_index_or_none(interactions.weights,
                                                 in_train),
                          num_users=interactions.num_users,
-                         num_items=interactions.num_items)
+                         num_items=interactions.num_items,
+                         descriptors=interactions.descriptors)
     test = Interactions(interactions.user_ids[in_test],
                         interactions.item_ids[in_test],
                         ratings=_index_or_none(interactions.ratings,
@@ -171,6 +172,7 @@ def user_based_train_test_split(interactions,
                         weights=_index_or_none(interactions.weights,
                                                in_test),
                         num_users=interactions.num_users,
-                        num_items=interactions.num_items)
+                        num_items=interactions.num_items,
+                        descriptors=interactions.descriptors)
 
     return train, test

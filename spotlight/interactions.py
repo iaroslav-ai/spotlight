@@ -90,6 +90,10 @@ class Interactions(object):
         Number of distinct users in the dataset.
     num_items: int, optional
         Number of distinct items in the dataset.
+    descriptors: dict, optional
+        An array of form item_id: description.
+        Is used for context based recommendation
+        systems.
     """
 
     def __init__(self, user_ids, item_ids,
@@ -97,7 +101,8 @@ class Interactions(object):
                  timestamps=None,
                  weights=None,
                  num_users=None,
-                 num_items=None):
+                 num_items=None,
+                 descriptors=None):
 
         self.num_users = num_users or int(user_ids.max() + 1)
         self.num_items = num_items or int(item_ids.max() + 1)
@@ -107,6 +112,9 @@ class Interactions(object):
         self.ratings = ratings
         self.timestamps = timestamps
         self.weights = weights
+
+        # Hopefully this does not creat trouble in future :/
+        self.descriptors = descriptors
 
         self._check()
 
