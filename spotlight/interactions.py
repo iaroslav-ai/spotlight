@@ -34,6 +34,67 @@ def _generate_sequences(user_ids, item_ids,
 
             yield (user_ids[i], seq)
 
+class TextToIntEncoder():
+    """
+    Sklearn - like transformer class for text.
+
+    Parameters
+    ----------
+    size_dict: int
+        Maximum words dictionary to use
+
+    size_seq: int
+        Sequence of fixed size to use of
+        integers in which the text will be encoded.
+
+    """
+    def __init__(self, size_dict=1000, size_seq=50):
+        self.size_dict = size_dict
+        self.size_seq = size_seq
+
+    def _split_text(self, x):
+        """Splits a text string into
+        sequence of tokens."""
+        if not isinstance(x, str):
+            x = ""
+
+        import re
+        return re.findall(r'\w+', x)
+
+    def fit(self, X):
+        counts = {}
+
+        # count all the words
+        for x in X:
+            tokens = self._split_text(x)
+            for t in tokens:
+                c = counts.get(t, 0)
+                counts[t] = c + 1
+
+        # get the top x popular words
+        words = sorted(counts.items(), key=lambda x: x[1])[:self.size_dict]
+        words = [w[0] for w in words]
+
+        self.words = {v: i for i, v in enumerate(words, 1)}
+        return self
+
+    def transform(self, X):
+        result = []
+        for x in X:
+            tokens = self._split_text(x)
+            tokens = [
+                self.words[w] if w in self.words else 0 for w in tokens
+            ]
+
+            if len(tokens) > self.size_seq:
+                tokens = tokens[:self.size_seq]
+
+            while len(tokens) < self.size_seq:
+                tokens.append(0)
+
+            result.append(tokens)
+
+        return result
 
 class Interactions(object):
     """
@@ -72,6 +133,10 @@ class Interactions(object):
         Number of distinct items in the dataset.
         Must be larger than the maximum item id
         in item_ids.
+    descriptors: dict, optional
+        An array of form item_id: description.
+        Is used for context based recommendation
+        systems.
 
     Attributes
     ----------
@@ -90,10 +155,7 @@ class Interactions(object):
         Number of distinct users in the dataset.
     num_items: int, optional
         Number of distinct items in the dataset.
-    descriptors: dict, optional
-        An array of form item_id: description.
-        Is used for context based recommendation
-        systems.
+
     """
 
     def __init__(self, user_ids, item_ids,
@@ -113,8 +175,11 @@ class Interactions(object):
         self.timestamps = timestamps
         self.weights = weights
 
-        # Hopefully this does not creat trouble in future :/
-        self.descriptors = descriptors
+        # Hopefully this does not create trouble in future
+        encoder = TextToIntEncoder(1000, 80).fit([t for t in descriptors.values()])
+
+        # save directly as encoded integers
+        self.descriptors = {k: encoder.transform([v])[0] for k, v in descriptors.items()}
 
         self._check()
 
