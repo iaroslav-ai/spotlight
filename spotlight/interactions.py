@@ -72,7 +72,7 @@ class TextToIntEncoder():
                 counts[t] = c + 1
 
         # get the top x popular words
-        words = sorted(counts.items(), key=lambda x: x[1])[:self.size_dict]
+        words = sorted(counts.items(), key=lambda x: x[1])[-self.size_dict:]
         words = [w[0] for w in words]
 
         self.words = {v: i for i, v in enumerate(words, 1)}
@@ -175,11 +175,7 @@ class Interactions(object):
         self.timestamps = timestamps
         self.weights = weights
 
-        # Hopefully this does not create trouble in future
-        encoder = TextToIntEncoder(1000, 80).fit([t for t in descriptors.values()])
-
-        # save directly as encoded integers
-        self.descriptors = {k: encoder.transform([v])[0] for k, v in descriptors.items()}
+        self.descriptors = descriptors
 
         self._check()
 
@@ -336,7 +332,8 @@ class Interactions(object):
 
         return (SequenceInteractions(sequences,
                                      user_ids=sequence_users,
-                                     num_items=self.num_items))
+                                     num_items=self.num_items,
+                                     descriptors=self.descriptors))
 
 
 class SequenceInteractions(object):
@@ -351,6 +348,9 @@ class SequenceInteractions(object):
         :func:`~Interactions.to_sequence`
     num_items: int, optional
         The number of distinct items in the data
+    descriptors: dict, optional
+        A set of pairs of spotlight_id: description.
+        ``description'' can be a text, but is not limited to.
 
     Attributes
     ----------
@@ -362,7 +362,8 @@ class SequenceInteractions(object):
 
     def __init__(self,
                  sequences,
-                 user_ids=None, num_items=None):
+                 user_ids=None, num_items=None,
+                 descriptors=None):
 
         self.sequences = sequences
         self.user_ids = user_ids
@@ -372,6 +373,8 @@ class SequenceInteractions(object):
             self.num_items = sequences.max() + 1
         else:
             self.num_items = num_items
+
+        self.descriptors = descriptors
 
     def __repr__(self):
 
